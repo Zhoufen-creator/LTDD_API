@@ -1,0 +1,221 @@
+@tran_nguyen_vi_khang_api_HostAddress = http://localhost:5153
+
+### =========================================================================
+### AUTHENTICATION ENDPOINTS (Google Sign-In & Application JWT)
+### =========================================================================
+
+### 1. Google Sign-In (POST)
+# Note: In real usage, pass the ID token obtained from GoogleSignIn in Flutter.
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/google
+Content-Type: application/json
+Accept: application/json
+
+{
+  "idToken": "SAMPLE_INVALID_GOOGLE_ID_TOKEN_FOR_TESTING_VALIDATION_FAILURE"
+}
+
+### 2. Get Current Authenticated User (Requires Bearer JWT)
+# Expected: 401 Unauthorized when token is missing or invalid
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/me
+Accept: application/json
+
+### 3. Get Current Authenticated User with Bearer Token
+# Replace YOUR_JWT_TOKEN with token received from /api/auth/google
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/me
+Authorization: Bearer YOUR_JWT_TOKEN
+Accept: application/json
+
+### 4. Send Registration OTP (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/register/send-otp
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "newparent@example.com"
+}
+
+### 5. Register with OTP (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "newparent@example.com",
+  "otp": "123456",
+  "fullName": "Nguyen Van Parent",
+  "password": "SecurePassword123!"
+}
+
+### 6. Login with Email & Password (Step 1: Triggers 2FA OTP) (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "newparent@example.com",
+  "password": "SecurePassword123!"
+}
+
+### 7. Verify Login OTP (Step 2: Receives Application JWT) (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/login/verify-otp
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "newparent@example.com",
+  "otp": "123456"
+}
+
+### 8. Resend Login OTP (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/auth/login/resend-otp
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "newparent@example.com"
+}
+
+
+### =========================================================================
+### CHILDREN ENDPOINTS
+### =========================================================================
+
+### 1. Get all children
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/children
+Accept: application/json
+
+### 2. Get children filtered by ParentId (e.g. parentId = 1)
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/children?parentId=1
+Accept: application/json
+
+### 3. Get child by ID
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/children/1
+Accept: application/json
+
+### 4. Create a child (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/children
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fullName": "Alice Johnson",
+  "dateOfBirth": "2015-05-12T00:00:00Z",
+  "parentId": 1
+}
+
+### 5. Create a child - Validation failure test (empty name & future DOB)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/children
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fullName": "",
+  "dateOfBirth": "2099-01-01T00:00:00Z",
+  "parentId": 9999
+}
+
+### 6. Update a child (PUT)
+PUT {{tran_nguyen_vi_khang_api_HostAddress}}/api/children/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fullName": "Alice Marie Johnson",
+  "dateOfBirth": "2015-05-12T00:00:00Z"
+}
+
+### 7. Delete a child (DELETE)
+DELETE {{tran_nguyen_vi_khang_api_HostAddress}}/api/children/1
+Accept: application/json
+
+
+### =========================================================================
+### DEVICES ENDPOINTS
+### =========================================================================
+
+### 1. Get all devices
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/devices
+Accept: application/json
+
+### 2. Get devices filtered by childId
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/devices?childId=1
+Accept: application/json
+
+### 3. Get device by ID
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/devices/1
+Accept: application/json
+
+### 4. Create/Enroll a device (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/devices
+Content-Type: application/json
+Accept: application/json
+
+{
+  "deviceName": "Alice's iPad Mini",
+  "deviceIdentifier": "IPAD-MINI-001A",
+  "platform": "iPadOS",
+  "childId": 1,
+  "isActive": true
+}
+
+### 5. Update a device (PUT)
+PUT {{tran_nguyen_vi_khang_api_HostAddress}}/api/devices/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "deviceName": "Alice's iPad Pro (Upgraded)",
+  "deviceIdentifier": "IPAD-PRO-999B",
+  "platform": "iPadOS",
+  "isActive": true
+}
+
+### 6. Delete a device (DELETE)
+DELETE {{tran_nguyen_vi_khang_api_HostAddress}}/api/devices/1
+Accept: application/json
+
+
+### =========================================================================
+### MONITORING RULES ENDPOINTS
+### =========================================================================
+
+### 1. Get all monitoring rules
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/monitoringrules
+Accept: application/json
+
+### 2. Get monitoring rules filtered by childId
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/monitoringrules?childId=1
+Accept: application/json
+
+### 3. Get monitoring rule by ID
+GET {{tran_nguyen_vi_khang_api_HostAddress}}/api/monitoringrules/1
+Accept: application/json
+
+### 4. Create a monitoring rule (POST)
+POST {{tran_nguyen_vi_khang_api_HostAddress}}/api/monitoringrules
+Content-Type: application/json
+Accept: application/json
+
+{
+  "ruleName": "Daily Screen Time Limit",
+  "ruleType": "TimeLimit",
+  "description": "Limit screen usage to 2 hours per day",
+  "childId": 1,
+  "isEnabled": true
+}
+
+### 5. Update a monitoring rule (PUT)
+PUT {{tran_nguyen_vi_khang_api_HostAddress}}/api/monitoringrules/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "ruleName": "Daily Screen Time Limit (Weekend)",
+  "ruleType": "TimeLimit",
+  "description": "Limit screen usage to 3 hours on weekends",
+  "isEnabled": true
+}
+
+### 6. Delete a monitoring rule (DELETE)
+DELETE {{tran_nguyen_vi_khang_api_HostAddress}}/api/monitoringrules/1
+Accept: application/json

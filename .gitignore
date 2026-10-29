@@ -1,0 +1,23 @@
+# Environment variables and secrets
+.env
+.env.*
+*.local.env
+appsettings.*.local.json
+
+# Build and test outputs
+bin/
+obj/
+**/bin/
+**/obj/
+TestResults/
+**/TestResults/
+*.log
+
+# IDE & User configurations
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+.fleet/
+

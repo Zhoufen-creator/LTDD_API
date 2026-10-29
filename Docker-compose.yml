@@ -1,0 +1,119 @@
+services:
+  # =========================================================================
+  # 1. SQL Server 2022 Database Engine
+  # =========================================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: tran_nguyen_vi_khang_sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+      MSSQL_PID: "Express"
+    # Port 1434 on host -> 1433 in container (cho phép cả local host 'dotnet run' và container kết nối)
+    ports:
+      - "1434:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # Alias 'sqldev' tương thích với các lệnh chạy local dev trước đây
+  sqldev:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: tran_nguyen_vi_khang_sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+      MSSQL_PID: "Express"
+    ports:
+      - "1434:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - backend_network
+    profiles:
+      - dev-only
+
+  # =========================================================================
+  # 2. ASP.NET Core .NET 8 Web API
+  # =========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=TranNguyenViKhangDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=True"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+      Jwt__Issuer: "${JWT_ISSUER:-ParentalControlAPI}"
+      Jwt__Audience: "${JWT_AUDIENCE:-ParentalControlApp}"
+      Jwt__Secret: "${JWT_SECRET}"
+      Authentication__Google__ClientId: "${GOOGLE_CLIENT_ID}"
+      Smtp__Host: "${SMTP_HOST:-}"
+      Smtp__Port: "${SMTP_PORT:-587}"
+      Smtp__Username: "${SMTP_USERNAME:-}"
+      Smtp__Password: "${SMTP_PASSWORD:-}"
+      Smtp__From: "${SMTP_FROM:-}"
+      APPLY_MIGRATIONS_ON_STARTUP: "${APPLY_MIGRATIONS_ON_STARTUP:-true}"
+      ENABLE_SWAGGER: "${ENABLE_SWAGGER:-false}"
+      ENABLE_HTTPS_REDIRECTION: "false"
+    networks:
+      - backend_network
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # =========================================================================
+  # 3. Caddy Reverse Proxy & Automatic HTTPS
+  # =========================================================================
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 QUIC
+    environment:
+      DOMAIN_NAME: "${DOMAIN_NAME:-localhost}"
+      ACME_EMAIL: "${ACME_EMAIL:-admin@example.com}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - backend_network
+    depends_on:
+      api:
+        condition: service_healthy
+
+# =========================================================================
+# Networks & Persistent Volumes
+# =========================================================================
+networks:
+  backend_network:
+    driver: bridge
+    name: tran_nguyen_vi_khang_network
+
+volumes:
+  mssql_data:
+    name: tran_nguyen_vi_khang_mssql_data
+  caddy_data:
+    name: tran_nguyen_vi_khang_caddy_data
+  caddy_config:
+    name: tran_nguyen_vi_khang_caddy_config

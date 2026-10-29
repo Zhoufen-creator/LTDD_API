@@ -1,0 +1,28 @@
+{
+    # Global options
+    email {$ACME_EMAIL:admin@example.com}
+}
+
+# Domain configured via environment variable (defaults to localhost for testing)
+{$DOMAIN_NAME:localhost} {
+    # Reverse proxy to the internal ASP.NET Core API container
+    reverse_proxy api:8080 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-For {remote_host}
+        header_up Host {host}
+    }
+
+    # Production HTTP security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    log {
+        output stdout
+        format console
+    }
+}
+
